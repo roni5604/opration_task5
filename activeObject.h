@@ -16,5 +16,7 @@ typedef struct ActiveObject {
 } ActiveObject;
 
 ActiveObject* createActiveObject(TaskFunction task, ActiveObject *nextActiveObject);
+Queue* getQueue(ActiveObject* ao);
+void stopActiveObject(ActiveObject* ao);
 
 #endif

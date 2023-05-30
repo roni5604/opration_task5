@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "activeObject.h"
+#include <stdint.h>
 
 void *run(void *arg)
 {
@@ -18,7 +19,7 @@ void *run(void *arg)
         }
         else
         {
-            int data = (int)dequeue(this->queue);
+            int data = (int)(uintptr_t)dequeue(this->queue);
             if (data != -1)
             {
                 if (data == -3)
@@ -31,7 +32,7 @@ void *run(void *arg)
                 }
                 if (this->next != NULL)
                 {
-                    enqueue(this->next->queue, (void *)data);
+                    enqueue(this->next->queue, (void *)(uintptr_t)data);
                 }
             }
         }
@@ -49,4 +50,17 @@ ActiveObject *createActiveObject(TaskFunction task, ActiveObject *nextActiveObje
     this->task = task;
     pthread_create(&this->thread, NULL, run, this);
     return this;
+}
+Queue* getQueue(ActiveObject* activeObj) {
+    return activeObj->queue;
+}
+
+void stopActiveObject(ActiveObject* activeObj) {
+    pthread_mutex_lock(&activeObj->queue->lock);
+    activeObj->stop = 1;
+    pthread_cond_signal(&activeObj->queue->cond);
+    pthread_mutex_unlock(&activeObj->queue->lock);
+    pthread_join(activeObj->thread, NULL);
+    free(activeObj->queue);
+    free(activeObj);
 }

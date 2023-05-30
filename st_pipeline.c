@@ -2,6 +2,7 @@
 #include "activeObject.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 int is_prime(int num)
 {
@@ -40,24 +41,21 @@ int main(int argc, char *argv[])
     ActiveObject *ao3 = createActiveObject(thirdFunc, ao4);
     ActiveObject *ao2 = createActiveObject(secondFunc, ao3);
     ActiveObject *ao1 = createActiveObject(firstFunc, ao2);
-    array_to_first[0] =(void*) N;
-    array_to_first[1] = (void*) seed;
+    array_to_first[0] =(void*)(uintptr_t) N;
+    array_to_first[1] = (void*)(uintptr_t) seed;
     array_to_first[2] = ao1;
     ao1->isFirst = 1;
     enqueue(ao1->queue, (void *)array_to_first);
     
     sleep(1);
 
-    pthread_join(ao4->thread, NULL);
-    pthread_join(ao3->thread, NULL);
-    pthread_join(ao2->thread, NULL);
-    pthread_join(ao1->thread, NULL);
+    stopActiveObject(ao1);
+    stopActiveObject(ao2);
+    stopActiveObject(ao3);
+    stopActiveObject(ao4);
 
     free(array_to_first);
-    free(ao4);
-    free(ao3);
-    free(ao2);
-    free(ao1);
+
 
     return 0;
 }
@@ -65,19 +63,18 @@ int main(int argc, char *argv[])
 void firstFunc(void *argv)
 {
     void **array_to_first = (void **)argv;
-    int N = (int)array_to_first[0];  // Casting void* to int
-    int seed = (int)array_to_first[1];  // Casting void* to int
+    int N = (int)(uintptr_t)array_to_first[0];  // Casting void* to int
+    int seed = (int)(uintptr_t)array_to_first[1];  // Casting void* to int
     ActiveObject *ao1 = (ActiveObject *)array_to_first[2];  // Casting void* to ActiveObject*
     srand(seed);// Setting seed for rand()
     for (size_t i = 0; i < N; i++)
     {
         int number = (rand()%999999)+100000;
         printf("First %d\n", number);
-        enqueue(ao1->next->queue, (void *)number);
-        usleep(2000);
+        enqueue(ao1->next->queue, (void *)(uintptr_t)number);
+        usleep(1000);
     }
    
-     usleep(2000);
     enqueue(ao1->next->queue, (void *)-3);
     ao1->stop = 1;
 }
